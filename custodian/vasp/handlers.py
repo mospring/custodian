@@ -33,6 +33,7 @@ import numpy as np
 
 from monty.dev import deprecated
 from monty.serialization import loadfn
+from monty.io import zopen
 
 from math import ceil
 
@@ -103,9 +104,12 @@ class VaspErrorHandler(ErrorHandler):
         self.error_count = Counter()
 
     def check(self):
-        incar = Incar.from_file("INCAR")
+        try:
+            incar = Incar.from_file("INCAR")
+        except IOError:
+            incar = Incar.from_file("INCAR.gz")
         self.errors = set()
-        with open(self.output_filename, "r") as f:
+        with zopen(self.output_filename, "r") as f:
             for line in f:
                 l = line.strip()
                 for err, msgs in VaspErrorHandler.error_msgs.items():
@@ -347,9 +351,12 @@ class AliasingErrorHandler(ErrorHandler):
         self.errors = set()
 
     def check(self):
-        incar = Incar.from_file("INCAR")
+        try:
+            incar = Incar.from_file("INCAR")
+        except IOError:
+            incar = Incar.from_file("INCAR.gz")
         self.errors = set()
-        with open(self.output_filename, "r") as f:
+        with zopen(self.output_filename, "r") as f:
             for line in f:
                 l = line.strip()
                 for err, msgs in AliasingErrorHandler.error_msgs.items():
