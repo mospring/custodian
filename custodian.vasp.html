@@ -64,6 +64,16 @@
 <div class="section" id="subpackages">
 <h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="custodian.vasp.tests.html">custodian.vasp.tests package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custodian.vasp.tests.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custodian.vasp.tests.html#module-custodian.vasp.tests.test_handlers">custodian.vasp.tests.test_handlers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custodian.vasp.tests.html#module-custodian.vasp.tests.test_jobs">custodian.vasp.tests.test_jobs module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custodian.vasp.tests.html#module-custodian.vasp.tests.test_validators">custodian.vasp.tests.test_validators module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custodian.vasp.tests.html#module-custodian.vasp.tests">Module contents</a></li>
+</ul>
+</li>
+</ul>
 </div>
 </div>
 <div class="section" id="submodules">
@@ -101,7 +111,7 @@ default redirect used by <a class="reference internal" href="#custodian.vasp.job
 
 <dl class="attribute">
 <dt id="custodian.vasp.handlers.AliasingErrorHandler.error_msgs">
-<code class="descname">error_msgs</code><em class="property"> = {'aliasing_incar': ['Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accurate'], 'aliasing': ['WARNING: small aliasing (wrap around) errors must be expected']}</em><a class="headerlink" href="#custodian.vasp.handlers.AliasingErrorHandler.error_msgs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">error_msgs</code><em class="property"> = {'aliasing': ['WARNING: small aliasing (wrap around) errors must be expected'], 'aliasing_incar': ['Your FFT grids (NGX,NGY,NGZ) are not sufficient for an accurate']}</em><a class="headerlink" href="#custodian.vasp.handlers.AliasingErrorHandler.error_msgs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -492,7 +502,7 @@ default redirect used by <a class="reference internal" href="#custodian.vasp.job
 
 <dl class="attribute">
 <dt id="custodian.vasp.handlers.VaspErrorHandler.error_msgs">
-<code class="descname">error_msgs</code><em class="property"> = {'too_few_bands': ['TOO FEW BANDS'], 'edddav': ['Error EDDDAV: Call to ZHEGV failed'], 'brions': ['BRIONS problems: POTIM should be increased'], 'pricel': ['internal error in subroutine PRICEL'], 'rot_matrix': ['Found some non-integer element in rotation matrix'], 'tet': ['Tetrahedron method fails for NKPT&lt;4', 'Fatal error detecting k-mesh', 'Fatal error: unable to match k-point', 'Routine TETIRR needs special values'], 'grad_not_orth': ['EDWAV: internal error, the gradient is not orthogonal'], 'rspher': ['ERROR RSPHER'], 'amin': ['One of the lattice vectors is very long (&gt;50 A), but AMIN'], 'real_optlay': ['REAL_OPTLAY: internal error', 'REAL_OPT: internal ERROR'], 'eddrmm': ['WARNING in EDDRMM: call to ZHEGV failed'], 'subspacematrix': ['WARNING: Sub-Space-Matrix is not hermitian in DAV'], 'inv_rot_mat': ['inverse of rotation matrix was not found (increase SYMPREC)'], 'zbrent': ['ZBRENT: fatal internal in', 'ZBRENT: fatal error in bracketing'], 'brmix': ['BRMIX: very serious problems'], 'pssyevx': ['ERROR in subspace rotation PSSYEVX'], 'triple_product': ['ERROR: the triple product of the basis vectors'], 'incorrect_shift': ['Could not get correct shifts'], 'dentet': ['DENTET'], 'zpotrf': ['LAPACK: Routine ZPOTRF failed'], 'tetirr': ['Routine TETIRR needs special values']}</em><a class="headerlink" href="#custodian.vasp.handlers.VaspErrorHandler.error_msgs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">error_msgs</code><em class="property"> = {'pssyevx': ['ERROR in subspace rotation PSSYEVX'], 'tetirr': ['Routine TETIRR needs special values'], 'amin': ['One of the lattice vectors is very long (&gt;50 A), but AMIN'], 'triple_product': ['ERROR: the triple product of the basis vectors'], 'brions': ['BRIONS problems: POTIM should be increased'], 'incorrect_shift': ['Could not get correct shifts'], 'eddrmm': ['WARNING in EDDRMM: call to ZHEGV failed'], 'zpotrf': ['LAPACK: Routine ZPOTRF failed'], 'brmix': ['BRMIX: very serious problems'], 'real_optlay': ['REAL_OPTLAY: internal error', 'REAL_OPT: internal ERROR'], 'rspher': ['ERROR RSPHER'], 'zbrent': ['ZBRENT: fatal internal in', 'ZBRENT: fatal error in bracketing'], 'subspacematrix': ['WARNING: Sub-Space-Matrix is not hermitian in DAV'], 'grad_not_orth': ['EDWAV: internal error, the gradient is not orthogonal'], 'edddav': ['Error EDDDAV: Call to ZHEGV failed'], 'pricel': ['internal error in subroutine PRICEL'], 'dentet': ['DENTET'], 'tet': ['Tetrahedron method fails for NKPT&lt;4', 'Fatal error detecting k-mesh', 'Fatal error: unable to match k-point', 'Routine TETIRR needs special values'], 'rot_matrix': ['Found some non-integer element in rotation matrix'], 'inv_rot_mat': ['inverse of rotation matrix was not found (increase SYMPREC)'], 'too_few_bands': ['TOO FEW BANDS']}</em><a class="headerlink" href="#custodian.vasp.handlers.VaspErrorHandler.error_msgs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">

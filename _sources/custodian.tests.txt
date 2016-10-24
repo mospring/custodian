@@ -1,0 +1,22 @@
+custodian.tests package
+=======================
+
+Submodules
+----------
+
+custodian.tests.test_custodian module
+-------------------------------------
+
+.. automodule:: custodian.tests.test_custodian
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: custodian.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

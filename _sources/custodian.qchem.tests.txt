@@ -1,0 +1,22 @@
+custodian.qchem.tests package
+=============================
+
+Submodules
+----------
+
+custodian.qchem.tests.test_handlers module
+------------------------------------------
+
+.. automodule:: custodian.qchem.tests.test_handlers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: custodian.qchem.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,22 @@
+custodian.nwchem.tests package
+==============================
+
+Submodules
+----------
+
+custodian.nwchem.tests.test_handlers module
+-------------------------------------------
+
+.. automodule:: custodian.nwchem.tests.test_handlers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: custodian.nwchem.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

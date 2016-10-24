@@ -1,0 +1,285 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>custodian.ansible.tests.test_interpreter &#8212; custodian 1.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '1.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="top" title="custodian 1.0.3 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" />
+
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="../../../../_static/small_flask.css" type= "text/css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-39574369-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">custodian 1.0.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for custodian.ansible.tests.test_interpreter</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Jun 1, 2012</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Shyue Ping Ong&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2012, The Materials Project&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.1&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s2">&quot;Shyue Ping Ong&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;shyue@mit.edu&quot;</span>
+<span class="n">__date__</span> <span class="o">=</span> <span class="s2">&quot;Jun 1, 2012&quot;</span>
+
+<span class="kn">import</span> <span class="nn">unittest</span>
+
+<span class="kn">from</span> <span class="nn">custodian.ansible.interpreter</span> <span class="k">import</span> <span class="n">Modder</span>
+<span class="kn">from</span> <span class="nn">custodian.ansible.actions</span> <span class="k">import</span> <span class="n">FileActions</span>
+
+
+<div class="viewcode-block" id="ModderTest"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.ModderTest">[docs]</a><span class="k">class</span> <span class="nc">ModderTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ModderTest.test_dict_modify"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.ModderTest.test_dict_modify">[docs]</a>    <span class="k">def</span> <span class="nf">test_dict_modify</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">modder</span> <span class="o">=</span> <span class="n">Modder</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Hello&quot;</span><span class="p">:</span> <span class="s2">&quot;World&quot;</span><span class="p">}</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Hello&#39;</span><span class="p">:</span> <span class="s1">&#39;Universe&#39;</span><span class="p">,</span> <span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;Hello&#39;</span><span class="p">:</span> <span class="s1">&#39;Universe&#39;</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_unset&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Hello&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_push&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">]})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_push&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_inc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;num&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;num&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_inc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;num&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;num&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_rename&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;num&#39;</span><span class="p">:</span> <span class="s1">&#39;number&#39;</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_add_to_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_add_to_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_add_to_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pull&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pull_all&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_push_all&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">))}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span>
+                             <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span>
+                             <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pop&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span>
+                             <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+                             <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pop&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;List&#39;</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">,</span> <span class="s1">&#39;List&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+                             <span class="s1">&#39;number&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;b-&gt;c&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;b-&gt;d&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="mi">200</span><span class="p">}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;b-&gt;d&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_unset&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;b-&gt;d&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_push&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;e-&gt;f&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">300</span><span class="p">]}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_push_all&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;e-&gt;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">]}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span>
+                                   <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">300</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">]}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_inc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;b-&gt;c&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">102</span><span class="p">},</span>
+                                   <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">300</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">]}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pull&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;e-&gt;f&#39;</span><span class="p">:</span> <span class="mi">300</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">102</span><span class="p">},</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">]}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pull_all&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;e-&gt;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">]}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">102</span><span class="p">},</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[]}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_push_all&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;e-&gt;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">101</span><span class="p">,</span> <span class="mi">201</span><span class="p">,</span> <span class="mi">301</span><span class="p">,</span> <span class="mi">401</span><span class="p">]}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">102</span><span class="p">},</span>
+                                   <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">101</span><span class="p">,</span> <span class="mi">201</span><span class="p">,</span> <span class="mi">301</span><span class="p">,</span> <span class="mi">401</span><span class="p">]}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pop&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;e-&gt;f&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">102</span><span class="p">},</span>
+                                   <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">101</span><span class="p">,</span> <span class="mi">201</span><span class="p">,</span> <span class="mi">301</span><span class="p">]}}})</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_pop&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a-&gt;e-&gt;f&#39;</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">}}</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">102</span><span class="p">},</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">201</span><span class="p">,</span> <span class="mi">301</span><span class="p">]}}})</span></div>
+
+<div class="viewcode-block" id="ModderTest.test_file_modify"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.ModderTest.test_file_modify">[docs]</a>    <span class="k">def</span> <span class="nf">test_file_modify</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">modder</span> <span class="o">=</span> <span class="n">Modder</span><span class="p">(</span><span class="n">actions</span><span class="o">=</span><span class="p">[</span><span class="n">FileActions</span><span class="p">])</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_create&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="s1">&#39;Test data&#39;</span><span class="p">}},</span> <span class="s1">&#39;test_file&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_copy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dest&#39;</span><span class="p">:</span> <span class="s1">&#39;test_file_copy&#39;</span><span class="p">}},</span> <span class="s1">&#39;test_file&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_copy&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dest1&#39;</span><span class="p">:</span> <span class="s1">&#39;test_file_copy1&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;dest2&#39;</span><span class="p">:</span> <span class="s1">&#39;test_file_copy2&#39;</span><span class="p">}},</span>
+                      <span class="s1">&#39;test_file&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_move&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;dest&#39;</span><span class="p">:</span> <span class="s1">&#39;renamed_test_file&#39;</span><span class="p">}},</span>
+                      <span class="s1">&#39;test_file&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_delete&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}},</span>
+                      <span class="s1">&#39;renamed_test_file&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_modify&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="mo">0o666</span><span class="p">}},</span> <span class="s1">&#39;test_file_copy&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_delete&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}},</span> <span class="s1">&#39;test_file_copy&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_delete&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}},</span> <span class="s1">&#39;test_file_copy1&#39;</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">({</span><span class="s1">&#39;_file_delete&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}},</span> <span class="s1">&#39;test_file_copy2&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModderTest.test_strict_mode"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.ModderTest.test_strict_mode">[docs]</a>    <span class="k">def</span> <span class="nf">test_strict_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">modder</span> <span class="o">=</span> <span class="n">Modder</span><span class="p">(</span><span class="n">actions</span><span class="o">=</span><span class="p">[</span><span class="n">FileActions</span><span class="p">])</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Hello&quot;</span><span class="p">:</span> <span class="s2">&quot;World&quot;</span><span class="p">}</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;Hello&#39;</span><span class="p">:</span> <span class="s1">&#39;Universe&#39;</span><span class="p">,</span> <span class="s1">&#39;Bye&#39;</span><span class="p">:</span> <span class="s1">&#39;World&#39;</span><span class="p">}}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">,</span> <span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+
+        <span class="c1">#In non-strict mode, unknown actions are ignored.</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Hello&quot;</span><span class="p">:</span> <span class="s2">&quot;World&quot;</span><span class="p">}</span>
+        <span class="n">modder</span> <span class="o">=</span> <span class="n">Modder</span><span class="p">(</span><span class="n">actions</span><span class="o">=</span><span class="p">[</span><span class="n">FileActions</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;Hello&quot;</span><span class="p">:</span> <span class="s2">&quot;World&quot;</span><span class="p">})</span>
+
+        <span class="c1">#File actions not supported</span>
+        <span class="n">modder</span> <span class="o">=</span> <span class="n">Modder</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="n">modder</span><span class="o">.</span><span class="n">modify</span><span class="p">,</span>
+                          <span class="p">{</span><span class="s1">&#39;_file_create&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;content&#39;</span><span class="p">:</span> <span class="s1">&#39;Test data&#39;</span><span class="p">}},</span>
+                          <span class="s1">&#39;test_file&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModderTest.test_modify_object"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.ModderTest.test_modify_object">[docs]</a>    <span class="k">def</span> <span class="nf">test_modify_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">modder</span> <span class="o">=</span> <span class="n">Modder</span><span class="p">()</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">MyObject</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">b</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">mod_o</span> <span class="o">=</span> <span class="n">modder</span><span class="o">.</span><span class="n">modify_object</span><span class="p">({</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;b-&gt;a&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">}},</span> <span class="n">o</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">mod_o</span><span class="o">.</span><span class="n">b</span><span class="p">[</span><span class="s2">&quot;a&quot;</span><span class="p">],</span> <span class="mi">20</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="MyObject"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.MyObject">[docs]</a><span class="k">class</span> <span class="nc">MyObject</span><span class="p">():</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="n">a</span><span class="p">}</span>
+
+<div class="viewcode-block" id="MyObject.as_dict"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.MyObject.as_dict">[docs]</a>    <span class="k">def</span> <span class="nf">as_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]}}</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="MyObject.from_dict"><a class="viewcode-back" href="../../../../custodian.ansible.tests.html#custodian.ansible.tests.test_interpreter.MyObject.from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MyObject</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;b&quot;</span><span class="p">][</span><span class="s2">&quot;a&quot;</span><span class="p">])</span></div></div>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1">#import sys;sys.argv = [&#39;&#39;, &#39;Test.testName&#39;]</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+      &copy; Copyright 2013, Shyue Ping Ong, William Davidson Richards, Stephen Dacek, Xiaohui Qu.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

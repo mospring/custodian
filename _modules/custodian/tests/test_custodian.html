@@ -1,0 +1,347 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>custodian.tests.test_custodian &#8212; custodian 1.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '1.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="top" title="custodian 1.0.3 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" />
+
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="../../../_static/small_flask.css" type= "text/css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-39574369-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">custodian 1.0.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for custodian.tests.test_custodian</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">division</span><span class="p">,</span> <span class="n">print_function</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Jun 1, 2012</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Shyue Ping Ong&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2012, The Materials Project&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.1&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s2">&quot;Shyue Ping Ong&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;shyue@mit.edu&quot;</span>
+<span class="n">__date__</span> <span class="o">=</span> <span class="s2">&quot;Jun 1, 2012&quot;</span>
+
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">custodian.custodian</span> <span class="k">import</span> <span class="n">Job</span><span class="p">,</span> <span class="n">ErrorHandler</span><span class="p">,</span> <span class="n">Custodian</span><span class="p">,</span> <span class="n">Validator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+
+
+<div class="viewcode-block" id="ExampleJob"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleJob">[docs]</a><span class="k">class</span> <span class="nc">ExampleJob</span><span class="p">(</span><span class="n">Job</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobid</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;initial&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jobid</span> <span class="o">=</span> <span class="n">jobid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+
+<div class="viewcode-block" id="ExampleJob.setup"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleJob.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="ExampleJob.run"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleJob.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">sequence</span> <span class="o">=</span> <span class="p">[</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExampleJob.postprocess"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleJob.postprocess">[docs]</a>    <span class="k">def</span> <span class="nf">postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;ExampleJob</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jobid</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ExampleHandler"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler">[docs]</a><span class="k">class</span> <span class="nc">ExampleHandler</span><span class="p">(</span><span class="n">ErrorHandler</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+
+<div class="viewcode-block" id="ExampleHandler.check"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">50</span></div>
+
+<div class="viewcode-block" id="ExampleHandler.correct"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="s2">&quot;initial&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="s2">&quot;total &lt; 50&quot;</span><span class="p">,</span> <span class="s2">&quot;actions&quot;</span><span class="p">:</span> <span class="s2">&quot;increment by 1&quot;</span><span class="p">}</span></div></div>
+
+
+<div class="viewcode-block" id="ExampleHandler2"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler2">[docs]</a><span class="k">class</span> <span class="nc">ExampleHandler2</span><span class="p">(</span><span class="n">ErrorHandler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This handler always result in an error.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="n">params</span>
+
+<div class="viewcode-block" id="ExampleHandler2.check"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler2.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="ExampleHandler2.correct"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler2.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_error</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="s2">&quot;Unrecoverable error&quot;</span><span class="p">,</span> <span class="s2">&quot;actions&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span></div></div>
+
+
+<div class="viewcode-block" id="ExampleHandler2b"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler2b">[docs]</a><span class="k">class</span> <span class="nc">ExampleHandler2b</span><span class="p">(</span><span class="n">ExampleHandler2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This handler always result in an error. No runtime error though</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">raises_runtime_error</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="ExampleHandler2b.correct"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleHandler2b.correct">[docs]</a>    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">has_error</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="s2">&quot;Unrecoverable error&quot;</span><span class="p">,</span> <span class="s2">&quot;actions&quot;</span><span class="p">:</span> <span class="p">[]}</span></div></div>
+
+
+<div class="viewcode-block" id="ExampleValidator1"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleValidator1">[docs]</a><span class="k">class</span> <span class="nc">ExampleValidator1</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ExampleValidator1.check"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleValidator1.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span></div></div>
+
+
+<div class="viewcode-block" id="ExampleValidator2"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleValidator2">[docs]</a><span class="k">class</span> <span class="nc">ExampleValidator2</span><span class="p">(</span><span class="n">Validator</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ExampleValidator2.check"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.ExampleValidator2.check">[docs]</a>    <span class="k">def</span> <span class="nf">check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div></div>
+
+
+<div class="viewcode-block" id="CustodianTest"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest">[docs]</a><span class="k">class</span> <span class="nc">CustodianTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CustodianTest.setUp"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="CustodianTest.test_run"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest.test_run">[docs]</a>    <span class="k">def</span> <span class="nf">test_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">njobs</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;initial&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="p">([</span><span class="n">ExampleHandler</span><span class="p">(</span><span class="n">params</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleJob</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)],</span>
+                      <span class="n">max_errors</span><span class="o">=</span><span class="n">njobs</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="n">njobs</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ExampleHandler</span><span class="p">(</span><span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">as_dict</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="CustodianTest.test_run_interrupted"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest.test_run_interrupted">[docs]</a>    <span class="k">def</span> <span class="nf">test_run_interrupted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">njobs</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;initial&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;total&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="p">([</span><span class="n">ExampleHandler</span><span class="p">(</span><span class="n">params</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleJob</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)],</span>
+                      <span class="n">max_errors</span><span class="o">=</span><span class="n">njobs</span><span class="p">)</span>
+
+        <span class="n">total</span> <span class="o">=</span> <span class="n">njobs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">run_interrupted</span><span class="p">(),</span><span class="mi">100</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">run_interrupted</span><span class="p">(),</span><span class="mi">100</span><span class="p">)</span>
+
+        <span class="n">total_done</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">total_done</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="n">njobs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">params</span><span class="p">[</span><span class="s1">&#39;total&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">50</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">run_interrupted</span><span class="p">(),</span> <span class="mi">100</span><span class="o">-</span><span class="n">total_done</span><span class="p">)</span>
+                <span class="n">total_done</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="CustodianTest.test_unrecoverable"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest.test_unrecoverable">[docs]</a>    <span class="k">def</span> <span class="nf">test_unrecoverable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">njobs</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;initial&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">ExampleHandler2</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="p">([</span><span class="n">h</span><span class="p">],</span>
+                      <span class="p">[</span><span class="n">ExampleJob</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)],</span>
+                      <span class="n">max_errors</span><span class="o">=</span><span class="n">njobs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">has_error</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">ExampleHandler2b</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="p">([</span><span class="n">h</span><span class="p">],</span>
+                      <span class="p">[</span><span class="n">ExampleJob</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)],</span>
+                      <span class="n">max_errors</span><span class="o">=</span><span class="n">njobs</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">has_error</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CustodianTest.test_validators"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest.test_validators">[docs]</a>    <span class="k">def</span> <span class="nf">test_validators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">njobs</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;initial&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="p">([</span><span class="n">ExampleHandler</span><span class="p">(</span><span class="n">params</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleJob</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleValidator1</span><span class="p">()],</span>
+                      <span class="n">max_errors</span><span class="o">=</span><span class="n">njobs</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="n">njobs</span><span class="p">)</span>
+
+        <span class="n">njobs</span> <span class="o">=</span> <span class="mi">100</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;initial&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="p">([</span><span class="n">ExampleHandler</span><span class="p">(</span><span class="n">params</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleJob</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleValidator2</span><span class="p">()],</span>
+                      <span class="n">max_errors</span><span class="o">=</span><span class="n">njobs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertRaises</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CustodianTest.test_from_spec"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest.test_from_spec">[docs]</a>    <span class="k">def</span> <span class="nf">test_from_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec</span> <span class="o">=</span>  <span class="s2">&quot;&quot;&quot;jobs:</span>
+<span class="s2">- jb: custodian.vasp.jobs.VaspJob</span>
+<span class="s2">  params:</span>
+<span class="s2">    final: False</span>
+<span class="s2">    suffix: .relax1</span>
+<span class="s2">- jb: custodian.vasp.jobs.VaspJob</span>
+<span class="s2">  params:</span>
+<span class="s2">    final: True</span>
+<span class="s2">    suffix: .relax2</span>
+<span class="s2">    settings_override: {&quot;file&quot;: &quot;CONTCAR&quot;, &quot;action&quot;: {&quot;_file_copy&quot;: {&quot;dest&quot;: &quot;POSCAR&quot;}}}</span>
+<span class="s2">jobs_common_params:</span>
+<span class="s2">  $vasp_cmd: [&quot;mpirun&quot;, &quot;-machinefile&quot;, &quot;$PBS_NODEFILE&quot;, &quot;-np&quot;, &quot;24&quot;, &quot;/opt/vasp/5.4.1/bin/vasp&quot;]</span>
+<span class="s2">handlers:</span>
+<span class="s2">- hdlr: custodian.vasp.handlers.VaspErrorHandler</span>
+<span class="s2">- hdlr: custodian.vasp.handlers.AliasingErrorHandler</span>
+<span class="s2">- hdlr: custodian.vasp.handlers.MeshSymmetryErrorHandler</span>
+<span class="s2">validators:</span>
+<span class="s2">- vldr: custodian.vasp.validators.VasprunXMLValidator</span>
+<span class="s2">custodian_params:</span>
+<span class="s2">  $scratch_dir: $TMPDIR&quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">yaml</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;TMPDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;/tmp/random&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PBS_NODEFILE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;whatever&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="o">.</span><span class="n">from_spec</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">jobs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">vasp_cmd</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="s2">&quot;whatever&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">scratch_dir</span><span class="p">,</span> <span class="s2">&quot;/tmp/random&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">jobs</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">handlers</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">validators</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CustodianTest.tearDown"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianTest.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;custodian.*.tar.gz&quot;</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;custodian.json&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+            <span class="k">pass</span> <span class="c1">#Ignore if file cannot be found.</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CustodianCheckpointTest"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianCheckpointTest">[docs]</a><span class="k">class</span> <span class="nc">CustodianCheckpointTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="CustodianCheckpointTest.setUp"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianCheckpointTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span>
+                              <span class="s2">&quot;test_files&quot;</span><span class="p">,</span> <span class="s2">&quot;checkpointing&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;backup.tar.gz&#39;</span><span class="p">),</span>
+                    <span class="s1">&#39;custodian.chk.3.tar.gz&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CustodianCheckpointTest.test_checkpoint_loading"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianCheckpointTest.test_checkpoint_loading">[docs]</a>    <span class="k">def</span> <span class="nf">test_checkpoint_loading</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">njobs</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;initial&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">Custodian</span><span class="p">([</span><span class="n">ExampleHandler</span><span class="p">(</span><span class="n">params</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleJob</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">njobs</span><span class="p">)],</span>
+                      <span class="p">[</span><span class="n">ExampleValidator1</span><span class="p">()],</span>
+                      <span class="n">max_errors</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">checkpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">run_log</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">run</span><span class="p">()),</span> <span class="mi">5</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CustodianCheckpointTest.tearDown"><a class="viewcode-back" href="../../../custodian.tests.html#custodian.tests.test_custodian.CustodianCheckpointTest.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;custodian.json&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1">#import sys;sys.argv = [&#39;&#39;, &#39;Test.testName&#39;]</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+      &copy; Copyright 2013, Shyue Ping Ong, William Davidson Richards, Stephen Dacek, Xiaohui Qu.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

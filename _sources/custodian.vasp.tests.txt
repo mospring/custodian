@@ -1,0 +1,38 @@
+custodian.vasp.tests package
+============================
+
+Submodules
+----------
+
+custodian.vasp.tests.test_handlers module
+-----------------------------------------
+
+.. automodule:: custodian.vasp.tests.test_handlers
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+custodian.vasp.tests.test_jobs module
+-------------------------------------
+
+.. automodule:: custodian.vasp.tests.test_jobs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+custodian.vasp.tests.test_validators module
+-------------------------------------------
+
+.. automodule:: custodian.vasp.tests.test_validators
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: custodian.vasp.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

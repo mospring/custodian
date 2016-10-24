@@ -1,0 +1,616 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>custodian.vasp.tests.test_handlers &#8212; custodian 1.0.3 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '1.0.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="top" title="custodian 1.0.3 documentation" href="../../../../index.html" />
+    <link rel="up" title="Module code" href="../../../index.html" />
+
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="../../../../_static/small_flask.css" type= "text/css" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+<script type="text/javascript">
+  var _gaq = _gaq || [];
+  _gaq.push(['_setAccount', 'UA-39574369-1']);
+  _gaq.push(['_trackPageview']);
+</script>
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">custodian 1.0.3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for custodian.vasp.tests.test_handlers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># coding: utf-8</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="k">import</span> <span class="n">unicode_literals</span><span class="p">,</span> <span class="n">division</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Created on Jun 1, 2012</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Shyue Ping Ong, Stephen Dacek&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Copyright 2012, The Materials Project&quot;</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s2">&quot;0.1&quot;</span>
+<span class="n">__maintainer__</span> <span class="o">=</span> <span class="s2">&quot;Shyue Ping Ong&quot;</span>
+<span class="n">__email__</span> <span class="o">=</span> <span class="s2">&quot;shyue@mit.edu&quot;</span>
+<span class="n">__date__</span> <span class="o">=</span> <span class="s2">&quot;Jun 1, 2012&quot;</span>
+
+<span class="kn">import</span> <span class="nn">unittest</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">from</span> <span class="nn">custodian.vasp.handlers</span> <span class="k">import</span> <span class="n">VaspErrorHandler</span><span class="p">,</span> \
+    <span class="n">UnconvergedErrorHandler</span><span class="p">,</span> <span class="n">MeshSymmetryErrorHandler</span><span class="p">,</span> <span class="n">WalltimeHandler</span><span class="p">,</span> \
+    <span class="n">MaxForceErrorHandler</span><span class="p">,</span> <span class="n">PositiveEnergyErrorHandler</span><span class="p">,</span> <span class="n">PotimErrorHandler</span><span class="p">,</span> \
+    <span class="n">FrozenJobErrorHandler</span><span class="p">,</span> <span class="n">AliasingErrorHandler</span>
+<span class="kn">from</span> <span class="nn">pymatgen.io.vasp</span> <span class="k">import</span> <span class="n">Incar</span><span class="p">,</span> <span class="n">Poscar</span><span class="p">,</span> <span class="n">Structure</span><span class="p">,</span> <span class="n">Kpoints</span><span class="p">,</span> <span class="n">VaspInput</span>
+
+
+<span class="n">test_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span> <span class="s2">&quot;..&quot;</span><span class="p">,</span>
+                        <span class="s1">&#39;test_files&#39;</span><span class="p">)</span>
+
+<span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="clean_dir"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.clean_dir">[docs]</a><span class="k">def</span> <span class="nf">clean_dir</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;error.*.tar.gz&quot;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;custodian.chk.*.tar.gz&quot;</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">f</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VaspErrorHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">VaspErrorHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;VASP_PSP_DIR&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;VASP_PSP_DIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_dir</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;CHGCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;CHGCAR.orig&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_frozen_job"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_frozen_job">[docs]</a>    <span class="k">def</span> <span class="nf">test_frozen_job</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">FrozenJobErrorHandler</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;errors&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;Frozen job&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">)[</span><span class="s1">&#39;ALGO&#39;</span><span class="p">],</span> <span class="s2">&quot;Normal&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_check_correct"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_check_correct">[docs]</a>    <span class="k">def</span> <span class="nf">test_check_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.teterror&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;tet&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ISMEAR&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;INCAR&#39;</span><span class="p">}])</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.sgrcon&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;rot_matrix&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">a</span><span class="p">[</span><span class="s2">&quot;dict&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">]]),</span>
+                         <span class="p">{</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">})</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.real_optlay&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;real_optlay&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;LREAL&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;INCAR&#39;</span><span class="p">}])</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_mesh_symmetry"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_mesh_symmetry">[docs]</a>    <span class="k">def</span> <span class="nf">test_mesh_symmetry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">MeshSymmetryErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.ibzkpt&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;mesh_symmetry&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;kpoints&#39;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">]]}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;KPOINTS&#39;</span><span class="p">}])</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_dentet"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_dentet">[docs]</a>    <span class="k">def</span> <span class="nf">test_dentet</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.dentet&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;dentet&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;ISMEAR&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;INCAR&#39;</span><span class="p">}])</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_brmix"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_brmix">[docs]</a>    <span class="k">def</span> <span class="nf">test_brmix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.brmix&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># The first (no good OUTCAR) correction, check IMIX</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;brmix&#39;</span><span class="p">])</span>
+        <span class="n">vi</span> <span class="o">=</span> <span class="n">VaspInput</span><span class="o">.</span><span class="n">from_directory</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">vi</span><span class="p">[</span><span class="s2">&quot;INCAR&quot;</span><span class="p">][</span><span class="s2">&quot;IMIX&quot;</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;CHGCAR&quot;</span><span class="p">))</span>
+
+        <span class="c1"># The next correction check Gamma and evenize</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="n">vi</span> <span class="o">=</span> <span class="n">VaspInput</span><span class="o">.</span><span class="n">from_directory</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="s2">&quot;IMIX&quot;</span> <span class="ow">in</span> <span class="n">vi</span><span class="p">[</span><span class="s2">&quot;INCAR&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;CHGCAR&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">vi</span><span class="p">[</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">style</span> <span class="o">==</span> <span class="n">Kpoints</span><span class="o">.</span><span class="n">supported_modes</span><span class="o">.</span><span class="n">Gamma</span> <span class="ow">and</span> <span class="n">vi</span><span class="p">[</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">num_kpts</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">all_kpts_even</span> <span class="o">=</span> <span class="nb">all</span><span class="p">([</span>
+                <span class="nb">bool</span><span class="p">(</span><span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">vi</span><span class="p">[</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">kpts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">all_kpts_even</span><span class="p">)</span>
+
+        <span class="c1"># The next correction check ISYM and no CHGCAR</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="n">vi</span> <span class="o">=</span> <span class="n">VaspInput</span><span class="o">.</span><span class="n">from_directory</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">vi</span><span class="p">[</span><span class="s2">&quot;INCAR&quot;</span><span class="p">][</span><span class="s2">&quot;ISYM&quot;</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;CHGCAR&quot;</span><span class="p">))</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR.nelect&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.brmix&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[])</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_too_few_bands"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_too_few_bands">[docs]</a>    <span class="k">def</span> <span class="nf">test_too_few_bands</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;too_few_bands&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.too_few_bands&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;too_few_bands&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;NBANDS&#39;</span><span class="p">:</span> <span class="mi">501</span><span class="p">}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;INCAR&#39;</span><span class="p">}])</span>
+        <span class="n">clean_dir</span><span class="p">()</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_rot_matrix"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_rot_matrix">[docs]</a>    <span class="k">def</span> <span class="nf">test_rot_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;VASP_PSP_DIR&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;VASP_PSP_DIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_dir</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;poscar_error&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">subdir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">()</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;rot_matrix&quot;</span><span class="p">])</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="s2">&quot;error.1.tar.gz&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_to_from_dict"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_to_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">test_to_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;random_name&quot;</span><span class="p">)</span>
+        <span class="n">h2</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">as_dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">h2</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">h</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h2</span><span class="o">.</span><span class="n">output_filename</span><span class="p">,</span> <span class="s2">&quot;random_name&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_pssyevx"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_pssyevx">[docs]</a>    <span class="k">def</span> <span class="nf">test_pssyevx</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.pssyevx&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;pssyevx&quot;</span><span class="p">])</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;ALGO&quot;</span><span class="p">],</span> <span class="s2">&quot;Normal&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_eddrmm"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_eddrmm">[docs]</a>    <span class="k">def</span> <span class="nf">test_eddrmm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.eddrmm&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;eddrmm&quot;</span><span class="p">])</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;ALGO&quot;</span><span class="p">],</span> <span class="s2">&quot;Normal&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;eddrmm&quot;</span><span class="p">])</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;POTIM&quot;</span><span class="p">],</span> <span class="mf">0.25</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_edddav"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_edddav">[docs]</a>    <span class="k">def</span> <span class="nf">test_edddav</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.edddav&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;edddav&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="s2">&quot;CHGCAR&quot;</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.test_gradient_not_orthogonal"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.test_gradient_not_orthogonal">[docs]</a>    <span class="k">def</span> <span class="nf">test_gradient_not_orthogonal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.gradient_not_orthogonal&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s2">&quot;grad_not_orth&quot;</span><span class="p">])</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="s2">&quot;ISMEAR&quot;</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="VaspErrorHandlerTest.tearDown"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.VaspErrorHandlerTest.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;CHGCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;CHGCAR&quot;</span><span class="p">)</span>
+        <span class="n">clean_dir</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="AliasingErrorHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.AliasingErrorHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">AliasingErrorHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="AliasingErrorHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.AliasingErrorHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;VASP_PSP_DIR&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;VASP_PSP_DIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_dir</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;CHGCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;CHGCAR.orig&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AliasingErrorHandlerTest.test_aliasing"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.AliasingErrorHandlerTest.test_aliasing">[docs]</a>    <span class="k">def</span> <span class="nf">test_aliasing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;aliasing&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">AliasingErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.aliasing&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">clean_dir</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;aliasing&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_set&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;NGX&#39;</span><span class="p">:</span> <span class="mi">34</span><span class="p">}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;INCAR&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;CHGCAR&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;_file_delete&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}}},</span>
+                          <span class="p">{</span><span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;WAVECAR&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;_file_delete&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}}}])</span></div>
+
+<div class="viewcode-block" id="AliasingErrorHandlerTest.test_aliasing_incar"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.AliasingErrorHandlerTest.test_aliasing_incar">[docs]</a>    <span class="k">def</span> <span class="nf">test_aliasing_incar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;aliasing&quot;</span><span class="p">))</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">AliasingErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.aliasing_incar&quot;</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;aliasing_incar&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_unset&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;NGY&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;NGZ&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;INCAR&#39;</span><span class="p">},</span> <span class="p">{</span><span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;CHGCAR&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;_file_delete&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}}},</span>
+                          <span class="p">{</span><span class="s2">&quot;file&quot;</span><span class="p">:</span> <span class="s2">&quot;WAVECAR&quot;</span><span class="p">,</span>
+                            <span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;_file_delete&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s2">&quot;actual&quot;</span><span class="p">}}}])</span>
+
+        <span class="n">incar</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;INCAR.orig&#39;</span><span class="p">)</span>
+        <span class="n">incar</span><span class="p">[</span><span class="s2">&quot;ICHARG&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">incar</span><span class="o">.</span><span class="n">write_file</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;aliasing_incar&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;actions&quot;</span><span class="p">],</span>
+                         <span class="p">[{</span><span class="s1">&#39;action&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;_unset&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;NGY&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;NGZ&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}},</span>
+                           <span class="s1">&#39;dict&#39;</span><span class="p">:</span> <span class="s1">&#39;INCAR&#39;</span><span class="p">}])</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">clean_dir</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AliasingErrorHandlerTest.tearDown"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.AliasingErrorHandlerTest.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;CHGCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;CHGCAR&quot;</span><span class="p">)</span>
+        <span class="n">clean_dir</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="UnconvergedErrorHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.UnconvergedErrorHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">UnconvergedErrorHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="UnconvergedErrorHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.UnconvergedErrorHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;VASP_PSP_DIR&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;VASP_PSP_DIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_dir</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UnconvergedErrorHandlerTest.test_check_correct"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.UnconvergedErrorHandlerTest.test_check_correct">[docs]</a>    <span class="k">def</span> <span class="nf">test_check_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;unconverged&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">subdir</span><span class="p">)</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;KPOINTS&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;CONTCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTCAR.orig&quot;</span><span class="p">)</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="n">UnconvergedErrorHandler</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;Unconverged&#39;</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="s2">&quot;error.1.tar.gz&quot;</span><span class="p">))</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;KPOINTS.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;KPOINTS&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;CONTCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTCAR&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UnconvergedErrorHandlerTest.test_to_from_dict"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.UnconvergedErrorHandlerTest.test_to_from_dict">[docs]</a>    <span class="k">def</span> <span class="nf">test_to_from_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">UnconvergedErrorHandler</span><span class="p">(</span><span class="s2">&quot;random_name.xml&quot;</span><span class="p">)</span>
+        <span class="n">h2</span> <span class="o">=</span> <span class="n">UnconvergedErrorHandler</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">as_dict</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">h2</span><span class="p">),</span> <span class="n">UnconvergedErrorHandler</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h2</span><span class="o">.</span><span class="n">output_filename</span><span class="p">,</span> <span class="s2">&quot;random_name.xml&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="UnconvergedErrorHandlerTest.tearDownClass"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.UnconvergedErrorHandlerTest.tearDownClass">[docs]</a>    <span class="k">def</span> <span class="nf">tearDownClass</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ZpotrfErrorHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.ZpotrfErrorHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">ZpotrfErrorHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="ZpotrfErrorHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.ZpotrfErrorHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;VASP_PSP_DIR&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;VASP_PSP_DIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_dir</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s1">&#39;zpotrf&#39;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ZpotrfErrorHandlerTest.test_first_step"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.ZpotrfErrorHandlerTest.test_first_step">[docs]</a>    <span class="k">def</span> <span class="nf">test_first_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;OSZICAR.empty&quot;</span><span class="p">,</span> <span class="s2">&quot;OSZICAR&quot;</span><span class="p">)</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.out&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;errors&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;zpotrf&#39;</span><span class="p">])</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">s2</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span> <span class="n">s1</span><span class="o">.</span><span class="n">volume</span> <span class="o">*</span> <span class="mf">1.2</span> <span class="o">**</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ZpotrfErrorHandlerTest.test_potim_correction"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.ZpotrfErrorHandlerTest.test_potim_correction">[docs]</a>    <span class="k">def</span> <span class="nf">test_potim_correction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;OSZICAR.one_step&quot;</span><span class="p">,</span> <span class="s2">&quot;OSZICAR&quot;</span><span class="p">)</span>
+        <span class="n">s1</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">VaspErrorHandler</span><span class="p">(</span><span class="s2">&quot;vasp.out&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">(),</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s1">&#39;errors&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;zpotrf&#39;</span><span class="p">])</span>
+        <span class="n">s2</span> <span class="o">=</span> <span class="n">Structure</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">s2</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span> <span class="n">s1</span><span class="o">.</span><span class="n">volume</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">)[</span><span class="s1">&#39;POTIM&#39;</span><span class="p">],</span> <span class="mf">0.25</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ZpotrfErrorHandlerTest.tearDown"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.ZpotrfErrorHandlerTest.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="s1">&#39;zpotrf&#39;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;OSZICAR&quot;</span><span class="p">)</span>
+        <span class="n">clean_dir</span><span class="p">()</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="MaxForceErrorHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.MaxForceErrorHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">MaxForceErrorHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="MaxForceErrorHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.MaxForceErrorHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;VASP_PSP_DIR&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;VASP_PSP_DIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_dir</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MaxForceErrorHandlerTest.test_check_correct"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.MaxForceErrorHandlerTest.test_check_correct">[docs]</a>    <span class="k">def</span> <span class="nf">test_check_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#NOTE: the vasprun here has had projected and partial eigenvalues removed</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;max_force&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">subdir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">)</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="n">MaxForceErrorHandler</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;MaxForce&#39;</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="s2">&quot;error.1.tar.gz&quot;</span><span class="p">))</span>
+
+        <span class="n">incar</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;INCAR&#39;</span><span class="p">)</span>
+        <span class="n">poscar</span> <span class="o">=</span> <span class="n">Poscar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;POSCAR&#39;</span><span class="p">)</span>
+        <span class="n">contcar</span> <span class="o">=</span> <span class="n">Poscar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;CONTCAR&#39;</span><span class="p">)</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">poscar</span><span class="o">.</span><span class="n">structure</span><span class="p">,</span> <span class="n">contcar</span><span class="o">.</span><span class="n">structure</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">incar</span><span class="p">[</span><span class="s1">&#39;EDIFFG&#39;</span><span class="p">],</span> <span class="mf">0.005</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MaxForceErrorHandlerTest.tearDown"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.MaxForceErrorHandlerTest.tearDown">[docs]</a>    <span class="k">def</span> <span class="nf">tearDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="WalltimeHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.WalltimeHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">WalltimeHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="WalltimeHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.WalltimeHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WalltimeHandlerTest.test_check_and_correct"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.WalltimeHandlerTest.test_check_and_correct">[docs]</a>    <span class="k">def</span> <span class="nf">test_check_and_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># The test OSZICAR file has 60 ionic steps. Let&#39;s try a 1 hr wall</span>
+        <span class="c1"># time with a 1min buffer</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">WalltimeHandler</span><span class="p">(</span><span class="n">wall_time</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="n">buffer_time</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+
+        <span class="c1"># This makes sure the check returns True when the time left is less</span>
+        <span class="c1"># than the buffer time.</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">59</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+
+        <span class="c1"># This makes sure the check returns True when the time left is less</span>
+        <span class="c1"># than 3 x the average time per ionic step. We have a 62 min wall</span>
+        <span class="c1"># time, a very short buffer time, but the start time was 62 mins ago</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">WalltimeHandler</span><span class="p">(</span><span class="n">wall_time</span><span class="o">=</span><span class="mi">3720</span><span class="p">,</span> <span class="n">buffer_time</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">62</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+
+        <span class="c1"># Test that the STOPCAR is written correctly.</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;STOPCAR&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="s2">&quot;LSTOP = .TRUE.&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;STOPCAR&quot;</span><span class="p">)</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="n">WalltimeHandler</span><span class="p">(</span><span class="n">wall_time</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span> <span class="n">buffer_time</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span>
+                            <span class="n">electronic_step_stop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertFalse</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+        <span class="n">h</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">59</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+
+        <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;STOPCAR&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">content</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="s2">&quot;LABORT = .TRUE.&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;STOPCAR&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="WalltimeHandlerTest.tearDownClass"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.WalltimeHandlerTest.tearDownClass">[docs]</a>    <span class="k">def</span> <span class="nf">tearDownClass</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PositiveEnergyHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PositiveEnergyHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">PositiveEnergyHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PositiveEnergyHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PositiveEnergyHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PositiveEnergyHandlerTest.test_check_correct"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PositiveEnergyHandlerTest.test_check_correct">[docs]</a>    <span class="k">def</span> <span class="nf">test_check_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;positive_energy&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">subdir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">)</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="n">PositiveEnergyErrorHandler</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;Positive energy&#39;</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="s2">&quot;error.1.tar.gz&quot;</span><span class="p">))</span>
+
+        <span class="n">incar</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;INCAR&#39;</span><span class="p">)</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">incar</span><span class="p">[</span><span class="s1">&#39;ALGO&#39;</span><span class="p">],</span> <span class="s1">&#39;Normal&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="PositiveEnergyHandlerTest.tearDownClass"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PositiveEnergyHandlerTest.tearDownClass">[docs]</a>    <span class="k">def</span> <span class="nf">tearDownClass</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PotimHandlerTest"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PotimHandlerTest">[docs]</a><span class="k">class</span> <span class="nc">PotimHandlerTest</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PotimHandlerTest.setUp"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PotimHandlerTest.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">test_dir</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PotimHandlerTest.test_check_correct"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PotimHandlerTest.test_check_correct">[docs]</a>    <span class="k">def</span> <span class="nf">test_check_correct</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">test_dir</span><span class="p">,</span> <span class="s2">&quot;potim&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">subdir</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;INCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR.orig&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="s2">&quot;POSCAR&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">)</span>
+
+        <span class="n">incar</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;INCAR&#39;</span><span class="p">)</span>
+        <span class="n">original_potim</span> <span class="o">=</span> <span class="n">incar</span><span class="p">[</span><span class="s1">&#39;POTIM&#39;</span><span class="p">]</span>
+
+        <span class="n">h</span> <span class="o">=</span> <span class="n">PotimErrorHandler</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertTrue</span><span class="p">(</span><span class="n">h</span><span class="o">.</span><span class="n">check</span><span class="p">())</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">h</span><span class="o">.</span><span class="n">correct</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;errors&quot;</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;POTIM&#39;</span><span class="p">])</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subdir</span><span class="p">,</span> <span class="s2">&quot;error.1.tar.gz&quot;</span><span class="p">))</span>
+
+        <span class="n">incar</span> <span class="o">=</span> <span class="n">Incar</span><span class="o">.</span><span class="n">from_file</span><span class="p">(</span><span class="s1">&#39;INCAR&#39;</span><span class="p">)</span>
+        <span class="n">new_potim</span> <span class="o">=</span> <span class="n">incar</span><span class="p">[</span><span class="s1">&#39;POTIM&#39;</span><span class="p">]</span>
+
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;INCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;INCAR&quot;</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">move</span><span class="p">(</span><span class="s2">&quot;POSCAR.orig&quot;</span><span class="p">,</span> <span class="s2">&quot;POSCAR&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">original_potim</span><span class="p">,</span> <span class="n">new_potim</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">incar</span><span class="p">[</span><span class="s1">&#39;IBRION&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="PotimHandlerTest.tearDownClass"><a class="viewcode-back" href="../../../../custodian.vasp.tests.html#custodian.vasp.tests.test_handlers.PotimHandlerTest.tearDownClass">[docs]</a>    <span class="k">def</span> <span class="nf">tearDownClass</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">unittest</span><span class="o">.</span><span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+    <div class="footer">
+      &copy; Copyright 2013, Shyue Ping Ong, William Davidson Richards, Stephen Dacek, Xiaohui Qu.
+    </div>
+<div class="footer">This page uses <a href="http://analytics.google.com/">
+Google Analytics</a> to collect statistics. You can disable it by blocking
+the JavaScript coming from www.google-analytics.com.
+<script type="text/javascript">
+  (function() {
+    var ga = document.createElement('script');
+    ga.src = ('https:' == document.location.protocol ?
+              'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+    ga.setAttribute('async', 'true');
+    document.documentElement.firstChild.appendChild(ga);
+  })();
+</script>
+</div>
+
+  </body>
+</html>

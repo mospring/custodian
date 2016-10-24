@@ -1,0 +1,22 @@
+custodian.ansible.tests package
+===============================
+
+Submodules
+----------
+
+custodian.ansible.tests.test_interpreter module
+-----------------------------------------------
+
+.. automodule:: custodian.ansible.tests.test_interpreter
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: custodian.ansible.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:
