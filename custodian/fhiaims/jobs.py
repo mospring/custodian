@@ -4,6 +4,7 @@ from __future__ import unicode_literals, division
 
 import subprocess
 import shutil
+import os
 
 from custodian.custodian import Job
 
@@ -24,10 +25,10 @@ class FHIaimsJob(Job):
         """
         Initialized a basic FHIaims job.
         """
-        self.aims_cmd = aimc_cmd
+        self.aims_cmd = aims_cmd
         self.control_in = control_in
         self.geometry_in = geometry_in
-        self.output_file = self.output_file
+        self.output_file = output_file
         self.backup = backup
 
     def setup(self):
@@ -42,6 +43,9 @@ class FHIaimsJob(Job):
         """
         Performs FHI aims job run.
         """
+        if self._check_success():
+            return None
+
         with open(self.output_file,'w') as fout:
             p = subprocess.Popen(self.aims_cmd, stdout=fout)
         return p
@@ -51,3 +55,11 @@ class FHIaimsJob(Job):
         Postprocessing like renaming files, zip files etc. could be done
         """
         pass
+
+    def _check_success(self):
+        if os.path.exists(self.output_file):
+            with open(self.output_file,'r') as f:
+                for line in f:
+                    if 'Have a nice day' in line:
+                        return True
+        return False

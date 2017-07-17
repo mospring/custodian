@@ -1,16 +1,15 @@
-# coding: utf-8
-
-from __future__ import unicode_literals, division
+#from __future__ import unicode_literals, division
 
 from custodian.custodian import ErrorHandler
 from custodian.utils import backup
 
 from ase.io import read
 from ase.io.aims import write_aims
-from ase.calculators.aims import Aims, write_control, write_species
+from ase.calculators.aims import Aims
 from ase.calculators.calculator import Parameters
 
 import numpy as np
+from collections import Counter
 
 __author__ = "Maja-Olivia Lenz"
 __version__ = "0.1"
@@ -27,7 +26,7 @@ class FHIaimsErrorHandler(ErrorHandler):
     """
     is_monitor = True
 
-    error_msgs {
+    error_msgs = {
         "trusted_descent" : "trusted_descent",
         "check_cpu_consistency" : "check_cpu_consistency_matrix", 
         "check_for_close_encounters" : "check_for_close_encounters",
@@ -45,6 +44,9 @@ class FHIaimsErrorHandler(ErrorHandler):
         self.geometry_in = geometry_in
         self.param_file = param_file
 
+        self.errors = set()
+        self.error_count = Counter()
+
     def check(self):
         """
         Checks output file for errors. Returns Boolean.
@@ -61,7 +63,7 @@ class FHIaimsErrorHandler(ErrorHandler):
         """
         Corrects detected errors. Returns dict.
         """
-        backup(self.output_file, self.geometry_in, self.control_in, self.param_file)
+        backup([self.output_file, self.geometry_in, self.control_in, self.param_file])
         actions = []
        
         for e in self.errors: 
@@ -81,26 +83,32 @@ class FHIaimsErrorHandler(ErrorHandler):
                 act = self._fix_close_encounters(self.error_count[e])
                 actions.append(act)
                 self.error_count[e] += 1
-            elif "scf_not_converged" == e:
+            elif "scf_solver" == e:
                 act = self._fix_scf_not_converged(self.error_count[e])
                 actions.append(act)
                 self.error_count[e] += 1
+            elif "ill-conditioned" == e:
+                act = self._fix_ill_conditioned(self.error_count[e])
+                actions.append(act)
+                self.error_count[e] += 1 
             else:
                 # Unimplemented error
                 actions.append(None)
  
-        return {"errors": self.errors, "actions": actions}
+        return {"errors": list(self.errors), "actions": actions}
 
-    def _fix_scf_not_converged(error_count):
+    # ======= internal functions for error fixing ===================
+
+    def _fix_scf_not_converged(self, error_count):
         if error_count == 0:
             keys = ('mixer', 'charge_mix_param', 'occupation_type')
             vals = ('pulay', 0.05, 'gaussian 0.05')
-            action = 'Correction for metals'
+            action = 'Correction for metals 1'
         elif error_count in range(1,4):
-            mix_param = 10**(-erriter-1)
+            mix_param = 10**(-error_count-1)
             keys = ('mixer', 'charge_mix_param')
             vals = ('linear', mix_param)
-            action = 'Correction for metals'
+            action = 'Correction for metals 2'
         elif error_count == 4:
             #  Standard strategy for metals failed, try Slab
             keys = ('mixer','charge_mix_param','occupation_type','preconditioner')
@@ -112,14 +120,36 @@ class FHIaimsErrorHandler(ErrorHandler):
         self._set_control(keys,vals)            
         return action
 
-    def _fix_trusted_descent(error_count):
+    def _fix_ill_conditioned(self, error_count):
+        factor = 1.5
+        if error_count == 0:
+            # increase whole cell if material too dense
+            atoms = read(self.geometry_in, format='aims')
+            cell = atoms.get_cell() * factor
+            atoms.set_cell(cell)
+            # write new geometry file
+            write_aims(self.geometry_in,atoms)
+            return 'increased cell'
+        elif error_count == 1:
+            # restore original cell size
+            atoms = read(self.geometry_in, format='aims')
+            cell = atoms.get_cell() * 1.0 / factor
+            atoms.set_cell(cell)
+            write_aims(self.geometry_in,atoms)
+            # try instead:
+            keys = ('basis_threshold','override_illconditioning')
+            vals = (1e-6, '.true.')
+            self._set_control(keys, vals)
+            return 'override ill-conditioning'
+
+    def _fix_trusted_descent(self, error_count):
         if error_count >= 4:
             return None
         length = 0.015-error_count*0.005    # default 0.025
         self._set_control('harmonic_length_scale',length)
         return 'increased harmonic_length_scale'
 
-    def _fix_close_encounters(error_count):
+    def _fix_close_encounters(self, error_count):
         if error_count >= 4:
             return None
         atoms = read(self.geometry_in,format='aims')
@@ -139,8 +169,8 @@ class FHIaimsErrorHandler(ErrorHandler):
         write_aims(self.geometry_in,atoms)
         return 'increased smallest distance between atoms'
            
-    def _set_control(keys, values):
-        # read parameters.ase and build calc object
+    def _set_control(self, keys, values):
+        # read parameters.ase
         parameters = Parameters.read(self.param_file)
 
         # MODIFY 
@@ -153,6 +183,7 @@ class FHIaimsErrorHandler(ErrorHandler):
             print 'ERROR in _set_control: key_list must be string, tuple or list'
             return None
         
+        # set calculator object with new parameters
         calc = Aims(xc='',species_dir='')
         calc.parameters = parameters
         # read atoms object to write new input
