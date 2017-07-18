@@ -21,7 +21,7 @@ class FHIaimsJob(Job):
     """
     
     def __init__(self,aims_cmd, control_in='control.in', geometry_in='geometry.in',
-                 output_file='aims.out', backup=True):
+                 output_file='aims.out', error_file = 'aims.err', backup=True):
         """
         Initialized a basic FHIaims job.
         """
@@ -29,6 +29,7 @@ class FHIaimsJob(Job):
         self.control_in = control_in
         self.geometry_in = geometry_in
         self.output_file = output_file
+        self.error_file = error_file
         self.backup = backup
 
     def setup(self):
@@ -46,8 +47,8 @@ class FHIaimsJob(Job):
         if self._check_success():
             return None
 
-        with open(self.output_file,'w') as fout:
-            p = subprocess.Popen(self.aims_cmd, stdout=fout)
+        with open(self.output_file,'w') as fout, open(self.error_file,'w') as ferr:
+            p = subprocess.Popen(self.aims_cmd, stdout=fout,stderr=ferr)
         return p
 
     def postprocess(self):
