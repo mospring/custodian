@@ -24,14 +24,15 @@ class FHIaimsErrorHandler(ErrorHandler):
     Does not use ansible/interpreter/Modder but fixes in place.
     This error handler is monitoring the running job for errors.
     """
-    is_monitor = True
+    is_monitor = False
 
     error_msgs = {
         "trusted_descent" : "trusted_descent",
         "check_cpu_consistency" : "check_cpu_consistency_matrix", 
         "check_for_close_encounters" : "check_for_close_encounters",
         "scf_solver": "scf_solver: SCF cycle not converged.",
-        "ill-conditioned": "Attention: Ill-conditioned overlap matrix detected"
+        "ill-conditioned": "Attention: Ill-conditioned overlap matrix detected",
+        "too_many_neighbors": "get_neighbor_lists: Too many neighbors"
     }
 
     def __init__(self,output_file='aims.out',control_in='control.in',
@@ -91,6 +92,10 @@ class FHIaimsErrorHandler(ErrorHandler):
                 act = self._fix_ill_conditioned(self.error_count[e])
                 actions.append(act)
                 self.error_count[e] += 1 
+            elif "too_many_neighbors" == e:
+                act = self._fix_close_encounters(self.error_count[e])
+                actions.append(act)
+                self.error_count[e] += 1
             else:
                 # Unimplemented error
                 actions.append(None)
@@ -104,12 +109,12 @@ class FHIaimsErrorHandler(ErrorHandler):
             keys = ('mixer', 'charge_mix_param', 'occupation_type')
             vals = ('pulay', 0.05, 'gaussian 0.05')
             action = 'Correction for metals 1'
-        elif error_count in range(1,4):
+        elif error_count in range(1,3):
             mix_param = 10**(-error_count-1)
             keys = ('mixer', 'charge_mix_param')
             vals = ('linear', mix_param)
             action = 'Correction for metals 2'
-        elif error_count == 4:
+        elif error_count == 3:
             #  Standard strategy for metals failed, try Slab
             keys = ('mixer','charge_mix_param','occupation_type','preconditioner')
             vals = ('pulay', 0.2, 'gaussian 0.01', 'kerker off')
@@ -155,7 +160,7 @@ class FHIaimsErrorHandler(ErrorHandler):
         atoms = read(self.geometry_in,format='aims')
 
         # find smallest distance between two atoms and indices
-        dists = atoms.get_all_distance()
+        dists = atoms.get_all_distances()
         dists = np.triu(dists)  # only upper triag. because of symmetry
         smallest = np.min( dists[np.nonzero(dists)] ) # smallest non zero dist.
         indices = zip(*np.where( dists == smallest ))
