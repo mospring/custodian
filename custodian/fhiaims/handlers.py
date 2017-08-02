@@ -106,23 +106,30 @@ class FHIaimsErrorHandler(ErrorHandler):
 
     def _fix_scf_not_converged(self, error_count):
         if error_count == 0:
+            key = 'sc_iter_limit'
+            modifier = 2.5
+            action = 'Increase max. limit of scf iterations'
+            self._modify_control(key,modifier)
+        elif error_count == 1:
             keys = ('mixer', 'charge_mix_param', 'occupation_type')
             vals = ('pulay', 0.05, 'gaussian 0.05')
             action = 'Correction for metals 1'
-        elif error_count in range(1,3):
+            self._set_control(keys,vals)            
+        elif error_count in range(2,4):
             mix_param = 10**(-error_count-1)
             keys = ('mixer', 'charge_mix_param')
             vals = ('linear', mix_param)
             action = 'Correction for metals 2'
-        elif error_count == 3:
+            self._set_control(keys,vals)            
+        elif error_count == 4:
             #  Standard strategy for metals failed, try Slab
             keys = ('mixer','charge_mix_param','occupation_type','preconditioner')
             vals = ('pulay', 0.2, 'gaussian 0.01', 'kerker off')
             action = 'Slab'
+            self._set_control(keys,vals)            
         else:
             return None
 
-        self._set_control(keys,vals)            
         return action
 
     def _fix_ill_conditioned(self, error_count):
@@ -175,6 +182,8 @@ class FHIaimsErrorHandler(ErrorHandler):
         return 'increased smallest distance between atoms'
            
     def _set_control(self, keys, values):
+        # set a value in control in file        
+
         # read parameters.ase
         parameters = Parameters.read(self.param_file)
 
@@ -193,6 +202,26 @@ class FHIaimsErrorHandler(ErrorHandler):
         calc.parameters = parameters
         # read atoms object to write new input
         atoms = read(self.geometry_in, format='aims') 
+        # write new parameters file:
+        calc.parameters.write(self.param_file)
+        # write modified control.in
+        Aims.write_control(calc,atoms,self.control_in)
+        Aims.write_species(calc,atoms,self.control_in)
+
+    def _modify_control(self, key, modifier, mode='multiply')
+        # by default multiplies the key's value by modifier
+
+        # read parameters.ase
+        parameters = Parameters.read(self.param_file)
+
+        if mode == 'multiply':
+            parameter[key] = parameter[key] * modifier
+
+        # set calculator object with new parameters
+        calc = Aims(xc='',species_dir='')
+        calc.parameters = parameters
+        # read atoms object to write new input
+        atoms = read(self.geometry_in, format='aims')
         # write new parameters file:
         calc.parameters.write(self.param_file)
         # write modified control.in
