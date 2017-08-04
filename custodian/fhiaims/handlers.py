@@ -8,6 +8,7 @@ from ase.io.aims import write_aims
 from ase.calculators.aims import Aims
 from ase.calculators.calculator import Parameters
 
+import os
 import numpy as np
 from collections import Counter
 
@@ -111,17 +112,23 @@ class FHIaimsErrorHandler(ErrorHandler):
             action = 'Increase max. limit of scf iterations'
             self._modify_control(key,modifier)
         elif error_count == 1:
+            key = 'sc_iter_limit'
+            modifier = 2./5
+            self._modify_control(key,modifier)
+            self._set_basisset('tight')
+            action = 'Use tight integration grid with original iter limit.'
+        elif error_count == 2:
             keys = ('mixer', 'charge_mix_param', 'occupation_type')
             vals = ('pulay', 0.05, 'gaussian 0.05')
             action = 'Correction for metals 1'
             self._set_control(keys,vals)            
-        elif error_count in range(2,4):
+        elif error_count in range(3,5):
             mix_param = 10**(-error_count-1)
             keys = ('mixer', 'charge_mix_param')
             vals = ('linear', mix_param)
             action = 'Correction for metals 2'
             self._set_control(keys,vals)            
-        elif error_count == 4:
+        elif error_count == 5:
             #  Standard strategy for metals failed, try Slab
             keys = ('mixer','charge_mix_param','occupation_type','preconditioner')
             vals = ('pulay', 0.2, 'gaussian 0.01', 'kerker off')
@@ -208,14 +215,20 @@ class FHIaimsErrorHandler(ErrorHandler):
         Aims.write_control(calc,atoms,self.control_in)
         Aims.write_species(calc,atoms,self.control_in)
 
-    def _modify_control(self, key, modifier, mode='multiply')
+    def _set_basisset(self, tier):
+        # use basissets with tier given by `tier`:
+        # tier must be 'light','tight' etc.
+        speciesdir = os.path.join(os.environ['BASISSET'],tier)
+        self._set_control('species_dir', speciesdir)
+
+    def _modify_control(self, key, modifier, mode='multiply'):
         # by default multiplies the key's value by modifier
 
         # read parameters.ase
         parameters = Parameters.read(self.param_file)
 
         if mode == 'multiply':
-            parameter[key] = parameter[key] * modifier
+            parameters[key] = parameters[key] * modifier
 
         # set calculator object with new parameters
         calc = Aims(xc='',species_dir='')
