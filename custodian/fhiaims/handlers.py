@@ -11,6 +11,7 @@ from ase.calculators.calculator import Parameters
 import os
 import numpy as np
 from collections import Counter
+import datetime
 
 __author__ = "Maja-Olivia Lenz"
 __version__ = "0.1"
@@ -264,9 +265,8 @@ class WalltimeHandler(ErrorHandler):
     # error
     raises_runtime_error = False
 
-    def __init__(self, wall_time=None, buffer_time=300,
-                 electronic_step_stop=False,
-                 auto_continue = False):
+    def __init__(self, output_file='aims.out', wall_time=None, buffer_time = 300,
+                 stop_cycle=False):
         """
         Initializes the handler with a buffer time.
 
@@ -276,24 +276,9 @@ class WalltimeHandler(ErrorHandler):
                 determine the walltime from the PBS_WALLTIME environment
                 variable. If the wall time cannot be determined or is not
                 set, this handler will have no effect.
-            buffer_time (int): The min amount of buffer time in secs at the
-                end that the STOPCAR will be written. The STOPCAR is written
-                when the time remaining is < the higher of 3 x the average
-                time for each ionic step and the buffer time. Defaults to
-                300 secs, which is the default polling time of Custodian.
-                This is typically sufficient for the current ionic step to
-                complete. But if other operations are being performed after
-                the run has stopped, the buffer time may need to be increased
-                accordingly.
-            electronic_step_stop (bool): Whether to check for electronic steps
-                instead of ionic steps (e.g. for static runs on large systems or
-                static HSE runs, ...). Be careful that results such as density
-                or wavefunctions might not be converged at the electronic level.
-                Should be used with LWAVE = .True. to be useful. If this is
-                True, the STOPCAR is written with LABORT = .TRUE. instead of
-                LSTOP = .TRUE.
-            auto_continue (bool): Use the auto-continue functionality within the
-                VaspJob by ensuring Vasp doesn't delete the STOPCAR
+            stop_cycle (bool): If true, the stop will only happen after the current
+                scf cycle has converged successfully. If false, then the stop 
+                happens after the current scf iteration. Default is False
         """
         if wall_time is not None:
             self.wall_time = wall_time
@@ -303,75 +288,63 @@ class WalltimeHandler(ErrorHandler):
             self.walltime = int(os.environ["SBATCH_TIMELIMIT"])
         else:
             self.wall_time = None
-        self.buffer_time = buffer_time
         self.start_time = datetime.datetime.now()
-        self.electronic_step_stop = electronic_step_stop
-        self.electronic_steps_timings = [0]
-        self.prev_check_time = self.start_time
-        self.prev_check_nscf_steps = 0
-        self.auto_continue = auto_continue
+        self.buffer_time = buffer_time
+        self.stop_cycle = stop_cycle
 
     def check(self):
         if self.wall_time:
             run_time = datetime.datetime.now() - self.start_time
             total_secs = run_time.total_seconds()
-            if not self.electronic_step_stop:
-                try:
-                    # Intelligently determine time per ionic step.
-                    o = Oszicar("OSZICAR")
-                    nsteps = len(o.ionic_steps)
-                    time_per_step = total_secs / nsteps
-                except Exception:
-                    time_per_step = 0
+            if not self.cycle_stop:
+                nsteps = self._get_number_of_iterations()
+                time_per_step = total_secs / nsteps
             else:
-                try:
-                    # Intelligently determine approximate time per electronic
-                    # step.
-                    o = Oszicar("OSZICAR")
-                    if len(o.ionic_steps) == 0:
-                        nsteps = 0
-                    else:
-                        nsteps = sum(map(len, o.electronic_steps))
-                    if nsteps > self.prev_check_nscf_steps:
-                        steps_time = datetime.datetime.now() - \
-                            self.prev_check_time
-                        steps_secs = steps_time.total_seconds()
-                        step_timing = self.buffer_time * ceil(
-                            (steps_secs /
-                             (nsteps - self.prev_check_nscf_steps)) /
-                            self.buffer_time)
-                        self.electronic_steps_timings.append(step_timing)
-                        self.prev_check_nscf_steps = nsteps
-                        self.prev_check_time = datetime.datetime.now()
-                    time_per_step = max(self.electronic_steps_timings)
-                except Exception as ex:
-                    time_per_step = 0
-
-            # If the remaining time is less than average time for 3 ionic
-            # steps or buffer_time.
+                nsteps = self._get_number_of_cycles()
+                time_per_step = total_secs / nsteps
+                
+            # If the remaining time is less than average time for 3 iterations 
+            # or buffer_time.
             time_left = self.wall_time - total_secs
             if time_left < max(time_per_step * 3, self.buffer_time):
                 return True
 
         return False
-
+            
     def correct(self):
 
-        content = "LSTOP = .TRUE." if not self.electronic_step_stop else \
-            "LABORT = .TRUE."
-        #Write STOPCAR
-        actions = [{"file": "STOPCAR",
-                    "action": {"_file_create": {'content': content}}}]
-
-        if self.auto_continue:
-            actions.append({"file": "STOPCAR",
-                            "action": {"_file_modify": {'mode': 0o444}}})
-
-        m = Modder(actions=[FileActions])
-        for a in actions:
-            m.modify(a["action"], a["file"])
-        # Actions is being returned as None so that custodian will stop after
-        # STOPCAR is written. We do not want subsequent jobs to proceed.
+        if not self.stop_cycle:
+            filenam = 'abort_scf'
+        else:
+            filenam = 'abort_opt'
+       
+        touch(filenam) 
+        
         return {"errors": ["Walltime reached"], "actions": None}
 
 
+    def _get_number_of_cycles(self):
+        # Relaxation step number     29: Predicting new coordinates.
+        cycles = 0
+        with open(self.output_file, 'r') as f:
+            for line in f:
+                if 'Relaxation step number' in line:
+                    cycle += 1
+        return cycle
+
+    def _get_number_of_iterations(self):
+        iterations = 0
+        with open(self.output_file, 'r') as f:
+            for line in f:
+                if 'End self-consistency iteration #' in line:
+                    iterations += 1
+        return iterations
+
+
+# Auxiliary function. Creates file if not existent
+def touch(fname):
+    with open(fname, 'a'):
+        try: 
+          os.utime(fname, None)
+        except OSError:
+          print('File has just been deleted between open() and os.utime() calls')
