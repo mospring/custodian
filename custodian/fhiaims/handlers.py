@@ -19,6 +19,7 @@ __email__ = "lenz@fhi-berlin.mpg.de"
 __status__ = "Development"
 __date__ = "13/07/17"
 
+
 class FHIaimsErrorHandler(ErrorHandler):
     """
     Error handler for FHIaims jobs.
@@ -240,3 +241,137 @@ class FHIaimsErrorHandler(ErrorHandler):
         # write modified control.in
         Aims.write_control(calc,atoms,self.control_in)
         Aims.write_species(calc,atoms,self.control_in)
+
+# TODO adapt to FHIaims
+# 1. abort_scf stop after scf iteration
+# 2. abort_opt stop after scf cycle converged
+# write a relaxation_finished file if used with HIGHaims
+class WalltimeHandler(ErrorHandler):
+    """
+    Check if a run is nearing the walltime. If so, write a STOPCAR with
+    LSTOP or LABORT = .True.. You can specify the walltime either in the init (
+    which is unfortunately necessary for SGE and SLURM systems. If you happen
+    to be running on a PBS system and the PBS_WALLTIME variable is in the run
+    environment, the wall time will be automatically determined if not set.
+    """
+    is_monitor = True
+
+    # The WalltimeHandler should not terminate as we want VASP to terminate
+    # itself naturally with the STOPCAR.
+    is_terminating = False
+
+    # This handler will be unrecoverable, but custodian shouldn't raise an
+    # error
+    raises_runtime_error = False
+
+    def __init__(self, wall_time=None, buffer_time=300,
+                 electronic_step_stop=False,
+                 auto_continue = False):
+        """
+        Initializes the handler with a buffer time.
+
+        Args:
+            wall_time (int): Total walltime in seconds. If this is None and
+                the job is running on a PBS system, the handler will attempt to
+                determine the walltime from the PBS_WALLTIME environment
+                variable. If the wall time cannot be determined or is not
+                set, this handler will have no effect.
+            buffer_time (int): The min amount of buffer time in secs at the
+                end that the STOPCAR will be written. The STOPCAR is written
+                when the time remaining is < the higher of 3 x the average
+                time for each ionic step and the buffer time. Defaults to
+                300 secs, which is the default polling time of Custodian.
+                This is typically sufficient for the current ionic step to
+                complete. But if other operations are being performed after
+                the run has stopped, the buffer time may need to be increased
+                accordingly.
+            electronic_step_stop (bool): Whether to check for electronic steps
+                instead of ionic steps (e.g. for static runs on large systems or
+                static HSE runs, ...). Be careful that results such as density
+                or wavefunctions might not be converged at the electronic level.
+                Should be used with LWAVE = .True. to be useful. If this is
+                True, the STOPCAR is written with LABORT = .TRUE. instead of
+                LSTOP = .TRUE.
+            auto_continue (bool): Use the auto-continue functionality within the
+                VaspJob by ensuring Vasp doesn't delete the STOPCAR
+        """
+        if wall_time is not None:
+            self.wall_time = wall_time
+        elif "PBS_WALLTIME" in os.environ:
+            self.wall_time = int(os.environ["PBS_WALLTIME"])
+        elif "SBATCH_TIMELIMIT" in os.environ:
+            self.walltime = int(os.environ["SBATCH_TIMELIMIT"])
+        else:
+            self.wall_time = None
+        self.buffer_time = buffer_time
+        self.start_time = datetime.datetime.now()
+        self.electronic_step_stop = electronic_step_stop
+        self.electronic_steps_timings = [0]
+        self.prev_check_time = self.start_time
+        self.prev_check_nscf_steps = 0
+        self.auto_continue = auto_continue
+
+    def check(self):
+        if self.wall_time:
+            run_time = datetime.datetime.now() - self.start_time
+            total_secs = run_time.total_seconds()
+            if not self.electronic_step_stop:
+                try:
+                    # Intelligently determine time per ionic step.
+                    o = Oszicar("OSZICAR")
+                    nsteps = len(o.ionic_steps)
+                    time_per_step = total_secs / nsteps
+                except Exception:
+                    time_per_step = 0
+            else:
+                try:
+                    # Intelligently determine approximate time per electronic
+                    # step.
+                    o = Oszicar("OSZICAR")
+                    if len(o.ionic_steps) == 0:
+                        nsteps = 0
+                    else:
+                        nsteps = sum(map(len, o.electronic_steps))
+                    if nsteps > self.prev_check_nscf_steps:
+                        steps_time = datetime.datetime.now() - \
+                            self.prev_check_time
+                        steps_secs = steps_time.total_seconds()
+                        step_timing = self.buffer_time * ceil(
+                            (steps_secs /
+                             (nsteps - self.prev_check_nscf_steps)) /
+                            self.buffer_time)
+                        self.electronic_steps_timings.append(step_timing)
+                        self.prev_check_nscf_steps = nsteps
+                        self.prev_check_time = datetime.datetime.now()
+                    time_per_step = max(self.electronic_steps_timings)
+                except Exception as ex:
+                    time_per_step = 0
+
+            # If the remaining time is less than average time for 3 ionic
+            # steps or buffer_time.
+            time_left = self.wall_time - total_secs
+            if time_left < max(time_per_step * 3, self.buffer_time):
+                return True
+
+        return False
+
+    def correct(self):
+
+        content = "LSTOP = .TRUE." if not self.electronic_step_stop else \
+            "LABORT = .TRUE."
+        #Write STOPCAR
+        actions = [{"file": "STOPCAR",
+                    "action": {"_file_create": {'content': content}}}]
+
+        if self.auto_continue:
+            actions.append({"file": "STOPCAR",
+                            "action": {"_file_modify": {'mode': 0o444}}})
+
+        m = Modder(actions=[FileActions])
+        for a in actions:
+            m.modify(a["action"], a["file"])
+        # Actions is being returned as None so that custodian will stop after
+        # STOPCAR is written. We do not want subsequent jobs to proceed.
+        return {"errors": ["Walltime reached"], "actions": None}
+
+
