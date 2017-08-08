@@ -220,7 +220,7 @@ class FHIaimsErrorHandler(ErrorHandler):
     def _set_basisset(self, tier):
         # use basissets with tier given by `tier`:
         # tier must be 'light','tight' etc.
-        speciesdir = os.path.join(os.environ['BASISSET'],tier)
+        speciesdir = os.path.join(os.environ['BASISSETS'],tier)
         self._set_control('species_dir', speciesdir)
 
     def _modify_control(self, key, modifier, mode='multiply'):
