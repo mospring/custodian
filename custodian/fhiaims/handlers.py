@@ -288,6 +288,7 @@ class WalltimeHandler(ErrorHandler):
             self.walltime = int(os.environ["SBATCH_TIMELIMIT"])
         else:
             self.wall_time = None
+        self.output_file = output_file
         self.start_time = datetime.datetime.now()
         self.buffer_time = buffer_time
         self.stop_cycle = stop_cycle
@@ -296,7 +297,7 @@ class WalltimeHandler(ErrorHandler):
         if self.wall_time:
             run_time = datetime.datetime.now() - self.start_time
             total_secs = run_time.total_seconds()
-            if not self.cycle_stop:
+            if not self.stop_cycle:
                 nsteps = self._get_number_of_iterations()
                 time_per_step = total_secs / nsteps
             else:
