@@ -297,13 +297,17 @@ class WalltimeHandler(ErrorHandler):
         if self.wall_time:
             run_time = datetime.datetime.now() - self.start_time
             total_secs = run_time.total_seconds()
-            if not self.stop_cycle:
-                nsteps = self._get_number_of_iterations()
-                time_per_step = total_secs / nsteps
+            try:
+                if not self.stop_cycle:
+                    nsteps = self._get_number_of_iterations()
+                    time_per_step = total_secs / nsteps
+                else:
+                    nsteps = self._get_number_of_cycles()
+                    time_per_step = total_secs / nsteps
             else:
-                nsteps = self._get_number_of_cycles()
-                time_per_step = total_secs / nsteps
-                
+                time_per_step = 100
+                pass
+                    
             # If the remaining time is less than average time for 3 iterations 
             # or buffer_time.
             time_left = self.wall_time - total_secs
